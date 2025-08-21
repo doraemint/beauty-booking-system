@@ -24,6 +24,7 @@ export default function BookPage() {
   const [phone, setPhone] = useState("");
   const [startAt, setStartAt] = useState("");
   const [ok, setOk] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // โหลดบริการ
   useEffect(() => {
@@ -77,87 +78,385 @@ export default function BookPage() {
   }, [uid]);
 
   async function submit() {
-    const res = await fetch("/api/bookings/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        phone,
-        service_id: serviceId,
-        start_at: startAt,
-        line_user_id: uid,
-      }),
-    });
-    const j = await res.json();
-    if (res.ok) setOk(j.message || "สร้างคำขอจองแล้ว กรุณาส่งสลิปในแชต LINE");
-    else alert(j.error || "เกิดข้อผิดพลาด");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/bookings/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          phone,
+          service_id: serviceId,
+          start_at: startAt,
+          line_user_id: uid,
+        }),
+      });
+      const j = await res.json();
+      if (res.ok) setOk(j.message || "สร้างคำขอจองแล้ว กรุณาส่งสลิปในแชต LINE");
+      else alert(j.error || "เกิดข้อผิดพลาด");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">จองคิว</h1>
-      {!uid && (
-        <p className="text-sm text-orange-700">
-          กำลังยืนยันตัวตนผ่าน LINE… ถ้าหน้านี้วนลูป ให้เปิดลิงก์นี้ “ภายใน
-          LINE” อีกครั้ง
-        </p>
-      )}
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        {services.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setServiceId(s.id)}
-            className={`card text-left ${
-              serviceId === s.id ? "ring-2 ring-slate-900" : ""
-            }`}
-          >
-            {s.image_url ? (
-              <img
-                src={s.image_url}
-                alt={s.name}
-                className="w-full h-40 object-cover rounded-xl mb-3"
-              />
-            ) : null}
-            <div className="flex items-center justify-between">
-              <div className="font-medium">{s.name}</div>
-              <div className="badge">มัดจำ ฿{s.deposit}</div>
-            </div>
-            <div className="text-sm text-gray-500 mt-1">
-              ราคาเต็ม ฿{s.price} • {s.duration_mins} นาที
-            </div>
-          </button>
-        ))}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse animation-delay-2000"></div>
       </div>
 
-      <div className="card grid gap-3 max-w-md">
-        <input
-          className="border p-2 rounded"
-          placeholder="ชื่อ"
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          className="border p-2 rounded"
-          placeholder="เบอร์โทร"
-          onChange={(e) => setPhone(e.target.value)}
-        />
-        <input
-          type="datetime-local"
-          className="border p-2 rounded"
-          onChange={(e) => setStartAt(e.target.value)}
-        />
-        <button
-          className="btn btn-primary"
-          disabled={!serviceId || !startAt || !uid}
-          onClick={submit}
-        >
-          ยืนยันการจอง
-        </button>
-        {ok && <p className="text-green-700">{ok}</p>}
-        <p className="text-gray-500 text-sm">
-          หลังส่งคำขอ ให้กลับไปแชต LINE แล้วส่งสลิปเป็นรูปภาพ
-        </p>
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              จองคิว
+            </h1>
+          </div>
+          <p className="text-gray-600 text-lg">เลือกบริการและเวลาที่ต้องการ</p>
+        </div>
+
+        {/* Loading/Auth Status */}
+        {!uid && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="bg-gradient-to-r from-orange-100 to-amber-100 border border-orange-200 rounded-2xl p-6 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 border-4 border-orange-300 border-t-orange-600 rounded-full animate-spin"></div>
+                <div>
+                  <p className="text-orange-800 font-medium">
+                    กำลังยืนยันตัวตนผ่าน LINE
+                  </p>
+                  <p className="text-orange-700 text-sm mt-1">
+                    ถ้าหน้านี้วนลูป ให้เปิดลิงก์นี้ "ภายใน LINE" อีกครั้ง
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Services Grid */}
+        <div className="max-w-6xl mx-auto mb-12">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+            เลือกบริการ
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {services.map((s) => (
+              <div
+                key={s.id}
+                onClick={() => setServiceId(s.id)}
+                className={`group relative bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105 ${
+                  serviceId === s.id
+                    ? "ring-4 ring-indigo-500 shadow-2xl scale-105"
+                    : "hover:ring-2 hover:ring-indigo-300"
+                }`}
+              >
+                {/* Service Image */}
+                {s.image_url ? (
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={s.image_url}
+                      alt={s.name}
+                      className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  </div>
+                ) : (
+                  <div className="w-full h-48 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+                    <svg
+                      className="w-16 h-16 text-indigo-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                )}
+
+                {/* Selected Indicator */}
+                {serviceId === s.id && (
+                  <div className="absolute top-4 right-4">
+                    <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+
+                {/* Service Details */}
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="font-bold text-xl text-gray-800 group-hover:text-indigo-600 transition-colors">
+                      {s.name}
+                    </h3>
+                    <span className="px-3 py-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 text-sm font-medium rounded-full border border-green-200">
+                      มัดจำ ฿{s.deposit}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                        />
+                      </svg>
+                      <span className="font-semibold">฿{s.price}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>{s.duration_mins} นาที</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Booking Form */}
+        <div className="max-w-md mx-auto">
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
+              <svg
+                className="w-6 h-6 text-indigo-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              กรอกข้อมูล
+            </h2>
+
+            <div className="space-y-4">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="w-5 h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white/70 backdrop-blur-sm"
+                  placeholder="ชื่อ"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="w-5 h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white/70 backdrop-blur-sm"
+                  placeholder="เบอร์โทร"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="w-5 h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="datetime-local"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white/70 backdrop-blur-sm"
+                  value={startAt}
+                  onChange={(e) => setStartAt(e.target.value)}
+                />
+              </div>
+
+              <button
+                className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+                  !serviceId || !startAt || !uid || loading
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                }`}
+                disabled={!serviceId || !startAt || !uid || loading}
+                onClick={submit}
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    กำลังจอง...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    ยืนยันการจอง
+                  </>
+                )}
+              </button>
+
+              {ok && (
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-green-800 font-medium">{ok}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <svg
+                    className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <p className="text-blue-800 text-sm">
+                    หลังส่งคำขอ ให้กลับไปแชต LINE แล้วส่งสลิปเป็นรูปภาพ
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+      `}</style>
     </div>
   );
 }
