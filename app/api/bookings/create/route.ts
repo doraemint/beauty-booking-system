@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { generatePromptPayQRString } from "@/lib/promptpay";
 
 export const dynamic = "force-dynamic";
 
@@ -76,8 +77,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "ช่วงเวลานี้ไม่ว่าง กรุณาเลือกเวลาอื่น" }, { status: 409 });
   }
 
+  // For PromptPay QR payments, we need to generate the QR code
+  let promptpayQRCode = null;
+  if (payment_method === "promptpay_qr") {
+    try {
+      // Fetch PromptPay settings
+      const { data: settingsData, error: settingsError } = await supabaseAdmin
+        .from("settings")
+        .select("value")
+        .eq("key", "promptpay")
+        .single();
+
+      if (!settingsError && settingsData?.value?.promptpayId) {
+        const promptpayId = settingsData.value.promptpayId;
+        const amount = svc.deposit;
+        
+        if (amount > 0) {
+          // Generate QR code
+          promptpayQRCode = generatePromptPayQRString(promptpayId, amount);
+        }
+      }
+    } catch (error) {
+      console.error("Error generating PromptPay QR code:", error);
+      // We don't fail the booking creation if QR generation fails
+    }
+  }
+
   // Create the booking
-  const { data: bookingData, error: bookingError } = await supabaseAdmin.from("bookings").insert({
+  const bookingInsertData = {
     customer_id: customerId,
     service_id,
     start_at: start.toISOString(),
@@ -85,7 +112,10 @@ export async function POST(req: Request) {
     status: "awaiting_deposit",
     payment_status: "unpaid",
     payment_method,
-  }).select().single();
+    promptpay_qr_code: promptpayQRCode,
+  };
+
+  const { data: bookingData, error: bookingError } = await supabaseAdmin.from("bookings").insert(bookingInsertData).select().single();
   
   if (bookingError) return NextResponse.json({ error: bookingError.message }, { status: 500 });
 

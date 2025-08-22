@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import BottomNavBar from "@/components/BottomNavBar";
 
 type Booking = {
   id: string;
@@ -166,7 +167,7 @@ export default function BookingDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 pb-16 md:pb-0 relative">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
@@ -434,6 +435,25 @@ export default function BookingDetailsPage() {
                   Edit Information
                 </button>
                 <button
+                  className="flex-1 px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium flex items-center justify-center gap-2"
+                  onClick={() => window.location.href = "/book/history"}
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    ></path>
+                  </svg>
+                  ดูประวัติการจอง
+                </button>
+                <button
                   className="flex-1 px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium"
                   onClick={() => window.print()}
                 >
@@ -444,6 +464,8 @@ export default function BookingDetailsPage() {
           </div>
         </div>
       </div>
+      
+      <BottomNavBar />
     </div>
   );
 }

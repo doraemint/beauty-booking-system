@@ -81,6 +81,31 @@ export default function BookPage() {
     })();
   }, [uid]);
 
+  // Auto-fill customer information when uid is available
+  useEffect(() => {
+    if (!uid) return;
+
+    const fetchCustomerInfo = async () => {
+      try {
+        const res = await fetch(`/api/customers/${uid}/latest`);
+        const data = await res.json();
+        
+        if (res.ok && data.found) {
+          setName(data.name || "");
+          setPhone(data.phone || "");
+          // Show a notification that info was auto-filled
+          if (data.name || data.phone) {
+            console.log("Customer information auto-filled");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching customer info:", error);
+      }
+    };
+
+    fetchCustomerInfo();
+  }, [uid]);
+
   async function submit() {
     setLoading(true);
     try {
@@ -113,7 +138,7 @@ export default function BookPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative z-0">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>
@@ -324,6 +349,13 @@ export default function BookPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
+                {name && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      auto-filled
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="relative">
@@ -348,7 +380,27 @@ export default function BookPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
+                {phone && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      auto-filled
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {(name || phone) && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+                  <div className="flex items-start gap-2">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p className="text-green-800 text-sm">
+                      เราได้กรอกข้อมูลของคุณจากรายการจองก่อนหน้า กรุณาตรวจสอบและแก้ไขหากจำเป็น
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
