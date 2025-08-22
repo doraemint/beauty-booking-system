@@ -57,10 +57,10 @@ export async function GET(
       deposit_amount: booking.deposit_amount,
       payment_method: booking.payment_method,
       created_at: booking.created_at,
-      service_name: booking.services?.name || "Unknown Service",
-      service_price: booking.services?.price || 0,
-      customer_name: booking.customers?.name || "Unknown Customer",
-      customer_phone: booking.customers?.phone || "Unknown Phone"
+      service_name: booking.services?.[0]?.name || "Unknown Service",
+      service_price: booking.services?.[0]?.price || 0,
+      customer_name: booking.customers?.[0]?.name || "Unknown Customer",
+      customer_phone: booking.customers?.[0]?.phone || "Unknown Phone"
     }));
 
     return NextResponse.json(formattedBookings);
