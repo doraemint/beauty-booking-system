@@ -6,13 +6,13 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "bad json" }, { status: 400 });
-  const { name, phone, service_id, start_at, line_user_id } = body;
+  const { name, phone, service_id, start_at, line_user_id, payment_method = "bank_transfer" } = body;
   if (!service_id || !start_at || !line_user_id) return NextResponse.json({ error: "missing fields" }, { status: 400 });
 
-  // upsert customer by line_user_id
+  // Insert customer with line_user_id, name, and phone (allow duplicates for same line_user_id)
   const { data: cust, error: eCust } = await supabaseAdmin
     .from("customers")
-    .upsert({ line_user_id, name, phone }, { onConflict: "line_user_id" })
+    .insert({ line_user_id, name, phone })
     .select("id")
     .single();
   if (eCust) return NextResponse.json({ error: eCust.message }, { status: 500 });
@@ -43,15 +43,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "ช่วงเวลานี้ไม่ว่าง กรุณาเลือกเวลาอื่น" }, { status: 409 });
   }
 
-  const { error } = await supabaseAdmin.from("bookings").insert({
+  // Create the booking
+  const { data: bookingData, error: bookingError } = await supabaseAdmin.from("bookings").insert({
     customer_id: cust!.id,
     service_id,
     start_at: start.toISOString(),
     deposit_amount: svc.deposit,
     status: "awaiting_deposit",
     payment_status: "unpaid",
-  });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    payment_method,
+  }).select().single();
+  
+  if (bookingError) return NextResponse.json({ error: bookingError.message }, { status: 500 });
 
-  return NextResponse.json({ message: "สร้างคำขอจองแล้ว กรุณาส่งสลิปในแชต LINE" });
+  const message = payment_method === "promptpay_qr" 
+    ? "สร้างคำขอจองแล้ว กรุณาสแกน QR code เพื่อชำระเงิน" 
+    : "สร้างคำขอจองแล้ว กรุณาส่งสลิปในแชต LINE";
+
+  return NextResponse.json({ 
+    message,
+    payment_method,
+    booking_id: bookingData.id
+  });
 }
