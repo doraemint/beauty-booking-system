@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 
 type Row = {
@@ -36,7 +36,7 @@ export default function AdminBookingsPage() {
     setToken(initialToken);
   }, [initialToken]);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/bookings/list?status=${filter}`, {
@@ -59,11 +59,11 @@ export default function AdminBookingsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filter, token]);
 
   useEffect(() => {
     if (token) load();
-  }, [token, filter]);
+  }, [token, load]);
 
   async function approve(id: string) {
     if (!confirm("ยืนยันการอนุมัติการจองนี้?")) return;

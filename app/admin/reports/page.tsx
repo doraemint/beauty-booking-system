@@ -189,7 +189,7 @@ export default function ReportsPage() {
           </table>
         </div>
         <p className="mt-4 text-sm text-gray-500 text-center">
-          นี่คือตัวอย่างข้อมูลรายงาน คลิก "สร้างและดาวน์โหลดรายงาน" เพื่อรับรายงานจริง
+          นี่คือตัวอย่างข้อมูลรายงาน คลิก &quot;สร้างและดาวน์โหลดรายงาน&quot; เพื่อรับรายงานจริง
         </p>
       </div>
     </div>

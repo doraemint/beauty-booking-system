@@ -1,24 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import QRCode from "qrcode.react";
+import Image from "next/image";
 
 export default function BookingConfirmationPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [bookingData, setBookingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+
+  // Get booking ID from URL on client side only
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("bookingId");
+      setBookingId(id);
+    }
+  }, []);
 
   useEffect(() => {
+    if (!bookingId) {
+      setLoading(false);
+      return;
+    }
+
     const fetchBookingData = async () => {
-      const bookingId = searchParams.get("bookingId");
-
-      if (!bookingId) {
-        setLoading(false);
-        return;
-      }
-
       try {
         const res = await fetch(`/api/bookings/${bookingId}`);
         const data = await res.json();
@@ -43,7 +51,7 @@ export default function BookingConfirmationPage() {
     };
 
     fetchBookingData();
-  }, [searchParams]);
+  }, [bookingId]);
 
   if (loading) {
     return (
@@ -161,10 +169,12 @@ export default function BookingConfirmationPage() {
                   <div className="flex justify-center mb-6">
                     <div className="p-4 bg-white border-2 border-gray-200 rounded-xl">
                       {bookingData.qrImageUrl ? (
-                        <img
+                        <Image
                           src={bookingData.qrImageUrl}
                           alt="PromptPay QR Code"
                           className="w-48 h-48"
+                          width={48}
+                          height={48}
                         />
                       ) : bookingData.qrCodeData ? (
                         <QRCode

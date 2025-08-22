@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 export default function EditSuccessPage() {
-  const searchParams = useSearchParams();
-  const bookingId = searchParams.get("bookingId") || "";
-
+  const [bookingId, setBookingId] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(5);
+
+  // Get search params on client side only
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("bookingId");
+      setBookingId(id);
+    }
+  }, []);
 
   useEffect(() => {
     if (!bookingId) return;

@@ -34,7 +34,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     // Verify that the booking's customer belongs to this LINE user
-    if (booking.customers?.line_user_id !== line_user_id) {
+    const customerId = booking.customers && booking.customers.length > 0 ? booking.customers[0].line_user_id : undefined;
+    if (customerId !== line_user_id) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
