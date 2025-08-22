@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import liff from "@line/liff";
+import Image from "next/image";
 
 type Service = {
   id: string;
@@ -156,7 +157,7 @@ export default function BookPage() {
                     กำลังยืนยันตัวตนผ่าน LINE
                   </p>
                   <p className="text-orange-700 text-sm mt-1">
-                    ถ้าหน้านี้วนลูป ให้เปิดลิงก์นี้ "ภายใน LINE" อีกครั้ง
+                    ถ้าหน้านี้วนลูป ให้เปิดลิงก์นี้ &quot;ภายใน LINE&quot; อีกครั้ง
                   </p>
                 </div>
               </div>
@@ -183,10 +184,12 @@ export default function BookPage() {
                 {/* Service Image */}
                 {s.image_url ? (
                   <div className="relative overflow-hidden">
-                    <img
+                    <Image
                       src={s.image_url}
                       alt={s.name}
                       className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+                      width={100}
+                      height={48}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </div>

@@ -1,5 +1,6 @@
-'use client';
+"use client";
 
+import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 
 type Service = {
@@ -143,7 +144,7 @@ export default function ServicesManagementPage() {
 
   const handleDelete = async (id: string, name: string) => {
     if (!token) return;
-    
+
     // Confirm deletion
     if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบบริการ "${name}"?`)) {
       return;
@@ -151,16 +152,16 @@ export default function ServicesManagementPage() {
 
     try {
       const res = await fetch(`/api/services/delete?id=${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'x-admin-token': token,
+          "x-admin-token": token,
         },
       });
 
       if (res.ok) {
         // Remove the service from the local state
-        setServices(services.filter(service => service.id !== id));
-        alert('ลบบริการสำเร็จ');
+        setServices(services.filter((service) => service.id !== id));
+        alert("ลบบริการสำเร็จ");
       } else {
         const errorData = await res.json();
         alert(`เกิดข้อผิดพลาด: ${errorData.error}`);
@@ -307,10 +308,12 @@ export default function ServicesManagementPage() {
               >
                 {service.image_url ? (
                   <div className="h-40 bg-gray-200 relative">
-                    <img
+                    <Image
                       src={service.image_url}
                       alt={service.name}
                       className="w-full h-full object-cover"
+                      width={100}
+                      height={100}
                     />
                     {!service.is_active && (
                       <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -399,10 +402,12 @@ export default function ServicesManagementPage() {
             >
               {service.image_url ? (
                 <div className="h-40 bg-gray-200 relative">
-                  <img
+                  <Image
                     src={service.image_url}
                     alt={service.name}
                     className="w-full h-full object-cover"
+                    width={100}
+                    height={100}
                   />
                   {!service.is_active && (
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -512,13 +517,15 @@ export default function ServicesManagementPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     รูปภาพบริการ
                   </label>
-                  
+
                   {imagePreview ? (
                     <div className="relative">
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview" 
+                      <Image
+                        src={imagePreview}
+                        alt="Preview"
                         className="w-full h-40 object-cover rounded-lg border border-gray-300"
+                        width={100}
+                        height={100}
                       />
                       <button
                         type="button"
@@ -529,16 +536,20 @@ export default function ServicesManagementPage() {
                       </button>
                     </div>
                   ) : (
-                    <div 
+                    <div
                       className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-indigo-400 transition-colors"
                       onClick={triggerFileInput}
                     >
                       <div className="text-indigo-400 text-3xl mb-2">📷</div>
-                      <p className="text-gray-600 text-sm">คลิกเพื่อเลือกรูปภาพ</p>
-                      <p className="text-gray-500 text-xs mt-1">หรือลากไฟล์มาที่นี่</p>
+                      <p className="text-gray-600 text-sm">
+                        คลิกเพื่อเลือกรูปภาพ
+                      </p>
+                      <p className="text-gray-500 text-xs mt-1">
+                        หรือลากไฟล์มาที่นี่
+                      </p>
                     </div>
                   )}
-                  
+
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -546,7 +557,7 @@ export default function ServicesManagementPage() {
                     accept="image/*"
                     className="hidden"
                   />
-                  
+
                   <div className="mt-2 flex space-x-2">
                     <button
                       type="button"
@@ -561,8 +572,8 @@ export default function ServicesManagementPage() {
                         onClick={uploadImage}
                         disabled={uploading}
                         className={`flex-1 px-3 py-2 rounded-lg text-sm text-white ${
-                          uploading 
-                            ? "bg-indigo-400 cursor-not-allowed" 
+                          uploading
+                            ? "bg-indigo-400 cursor-not-allowed"
                             : "bg-indigo-600 hover:bg-indigo-700"
                         }`}
                       >

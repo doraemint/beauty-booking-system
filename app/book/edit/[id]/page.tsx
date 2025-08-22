@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
 import liff from "@line/liff";
 
 export default function EditBookingPage() {
-  const searchParams = useSearchParams();
-  const bookingId = searchParams.get("bookingId") || "";
+  const [bookingId, setBookingId] = useState("");
 
   const [uid, setUid] = useState("");
   const [name, setName] = useState("");
@@ -15,34 +13,30 @@ export default function EditBookingPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Get booking ID from URL on client side only
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("bookingId") || "";
+      setBookingId(id);
+    }
+  }, []);
+
   // Initialize LIFF and get user info
   useEffect(() => {
     const initLiff = async () => {
       try {
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID as string | undefined;
         if (!liffId) {
-          console.error("LIFF ID not configured");
-          setLoading(false);
+          console.error("LIFF ID is not set");
           return;
         }
 
         await liff.init({ liffId });
-
-        if (!liff.isLoggedIn()) {
-          liff.login({ redirectUri: window.location.href });
-          return;
+        const uid = liff.getDecodedIDToken()?.sub;
+        if (uid) {
+          setUid(uid);
         }
-
-        // Get user ID
-        const ctx: any = (liff as any).getContext?.();
-        if (ctx?.userId) {
-          setUid(ctx.userId);
-        } else {
-          const profile = await liff.getProfile();
-          setUid(profile.userId);
-        }
-
-        // Load current booking info
         if (bookingId) {
           await loadBookingInfo();
         }
@@ -56,7 +50,7 @@ export default function EditBookingPage() {
     initLiff();
   }, [bookingId]);
 
-  const loadBookingInfo = async () => {
+  const loadBookingInfo = useCallback(async () => {
     try {
       const res = await fetch(`/api/bookings/${bookingId}`);
       if (res.ok) {
@@ -67,7 +61,34 @@ export default function EditBookingPage() {
     } catch (error) {
       console.error("Error loading booking info:", error);
     }
-  };
+  }, [bookingId]);
+
+  useEffect(() => {
+    const initLiff = async () => {
+      try {
+        const liffId = process.env.NEXT_PUBLIC_LIFF_ID as string | undefined;
+        if (!liffId) {
+          console.error("LIFF ID is not set");
+          return;
+        }
+
+        await liff.init({ liffId });
+        const uid = liff.getDecodedIDToken()?.sub;
+        if (uid) {
+          setUid(uid);
+        }
+        if (bookingId) {
+          await loadBookingInfo();
+        }
+      } catch (error) {
+        console.error("LIFF initialization error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initLiff();
+  }, [bookingId, loadBookingInfo]);
 
   const saveChanges = async () => {
     if (!bookingId || !uid) {

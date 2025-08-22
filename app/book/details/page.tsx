@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 type Booking = {
   id: string;
@@ -27,12 +26,19 @@ type Booking = {
 };
 
 export default function BookingDetailsPage() {
-  const searchParams = useSearchParams();
-  const bookingId = searchParams.get("bookingId") || "";
-
+  const [bookingId, setBookingId] = useState<string | null>(null);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Get booking ID from URL on client side only
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("bookingId");
+      setBookingId(id);
+    }
+  }, []);
 
   useEffect(() => {
     if (!bookingId) {
@@ -131,7 +137,7 @@ export default function BookingDetailsPage() {
             Booking Not Found
           </h1>
           <p className="text-gray-600 mb-6">
-            The booking you're looking for doesn't exist or has been removed.
+            The booking you&apos;re looking for doesn&apos;t exist or has been removed.
           </p>
           <button
             className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium"

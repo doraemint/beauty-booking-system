@@ -48,13 +48,15 @@ export async function POST(
   if (e2) return NextResponse.json({ error: e2.message }, { status: 500 });
 
   // Send LINE notification to customer
-  const to = b.customers?.line_user_id as string | undefined;
+  const to = b.customers && b.customers.length > 0 ? b.customers[0].line_user_id : undefined;
+  const serviceName = b.services && b.services.length > 0 ? b.services[0].name : "";
   if (to) {
     await linePush(to, [
       {
         type: "text",
         text: `ขออภัย ไม่สามารถยืนยันมัดจำได้ ❌
 ${reason ? `เหตุผล: ${reason}` : ""}
+บริการ: ${serviceName}
 โปรดส่งสลิปใหม่หรือติดต่อแอดมินค่ะ`,
       },
     ]);

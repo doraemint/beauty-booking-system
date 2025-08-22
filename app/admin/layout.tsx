@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export default function AdminLayout({
   children,
@@ -12,13 +12,17 @@ export default function AdminLayout({
   const [token, setToken] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const [isClient, setIsClient] = useState(false);
 
   // Get token from URL on initial load
   useEffect(() => {
-    const tokenParam = searchParams.get("token") || "";
-    setToken(tokenParam);
-  }, [searchParams]);
+    setIsClient(true);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tokenParam = params.get("token") || "";
+      setToken(tokenParam);
+    }
+  }, []);
 
   // Navigation items
   const navItems = [

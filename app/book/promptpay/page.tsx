@@ -1,57 +1,61 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode.react';
 
 export default function PromptPayQRPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [qrData, setQrData] = useState<string>('');
   const [bookingInfo, setBookingInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+
+  // Get booking ID from URL on client side only
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('bookingId');
+      setBookingId(id);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchQRCode = async () => {
-      const bookingId = searchParams.get('bookingId');
-      
-      if (!bookingId) {
-        setError('ไม่พบข้อมูลการจอง');
-        setLoading(false);
-        return;
-      }
+    if (!bookingId) {
+      setError('ไม่พบข้อมูลการจอง');
+      setLoading(false);
+      return;
+    }
 
+    const fetchQRCode = async () => {
       try {
         const response = await fetch('/api/promptpay/generate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ booking_id: bookingId }),
+          body: JSON.stringify({ bookingId }),
         });
 
         const data = await response.json();
 
         if (response.ok) {
-          setQrData(data.qr_code_data);
-          setBookingInfo({
-            amount: data.amount,
-            serviceName: data.service_name,
-            bookingId: bookingId
-          });
+          setQrData(data.qrData);
+          setBookingInfo(data.bookingInfo);
         } else {
-          setError(data.error || 'เกิดข้อผิดพลาดในการสร้าง QR code');
+          setError(data.error || 'ไม่สามารถสร้าง QR Code ได้');
         }
       } catch (err) {
-        setError('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์');
+        setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        console.error('Error generating QR code:', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchQRCode();
-  }, [searchParams]);
+  }, [bookingId]);
 
   if (loading) {
     return (

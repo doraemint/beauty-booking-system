@@ -336,7 +336,7 @@ export default function CustomersManagementPage() {
             <div>
               <h3 className="font-medium text-blue-800 mb-1">ข้อมูลลูกค้า</h3>
               <p className="text-blue-700 text-sm">
-                แต่ละบัตรแสดงข้อมูลสรุปตาม LINE ID ซึ่งแต่ละ ID อาจมีหลายลูกค้า คลิก "ดูรายละเอียด" เพื่อดูข้อมูลลูกค้าแต่ละคน
+                แต่ละบัตรแสดงข้อมูลสรุปตาม LINE ID ซึ่งแต่ละ ID อาจมีหลายลูกค้า คลิก &quot;ดูรายละเอียด&quot; เพื่อดูข้อมูลลูกค้าแต่ละคน
               </p>
             </div>
           </div>
