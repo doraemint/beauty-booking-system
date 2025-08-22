@@ -39,6 +39,9 @@ export default function PromptPayQRPage() {
         });
 
         const data = await response.json();
+        
+        console.log("API Response:", data);
+        console.log("Response Status:", response.status);
 
         if (response.ok) {
           setQrData(data.qrData);
@@ -47,8 +50,8 @@ export default function PromptPayQRPage() {
           setError(data.error || 'ไม่สามารถสร้าง QR Code ได้');
         }
       } catch (err) {
-        setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
         console.error('Error generating QR code:', err);
+        setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
       } finally {
         setLoading(false);
       }

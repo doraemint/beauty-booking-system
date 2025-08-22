@@ -9,13 +9,46 @@ export async function POST(req: Request) {
   const { name, phone, service_id, start_at, line_user_id, payment_method = "bank_transfer" } = body;
   if (!service_id || !start_at || !line_user_id) return NextResponse.json({ error: "missing fields" }, { status: 400 });
 
-  // Insert customer with line_user_id, name, and phone (allow duplicates for same line_user_id)
-  const { data: cust, error: eCust } = await supabaseAdmin
+  // Check if customer already exists, if not create new customer record
+  let customerId;
+  const { data: existingCustomer, error: selectError } = await supabaseAdmin
     .from("customers")
-    .insert({ line_user_id, name, phone })
     .select("id")
-    .single();
-  if (eCust) return NextResponse.json({ error: eCust.message }, { status: 500 });
+    .eq("line_user_id", line_user_id)
+    .maybeSingle();
+
+  if (selectError) {
+    return NextResponse.json({ error: selectError.message }, { status: 500 });
+  }
+
+  if (existingCustomer) {
+    // Update existing customer with new name and phone
+    const { data: updatedCustomer, error: updateError } = await supabaseAdmin
+      .from("customers")
+      .update({ name, phone })
+      .eq("line_user_id", line_user_id)
+      .select("id")
+      .single();
+    
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+    
+    customerId = updatedCustomer.id;
+  } else {
+    // Insert new customer record
+    const { data: newCustomer, error: insertError } = await supabaseAdmin
+      .from("customers")
+      .insert({ line_user_id, name, phone })
+      .select("id")
+      .single();
+    
+    if (insertError) {
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+    
+    customerId = newCustomer.id;
+  }
 
   // fetch service to get deposit & duration
   const { data: svc, error: e1 } = await supabaseAdmin
@@ -45,7 +78,7 @@ export async function POST(req: Request) {
 
   // Create the booking
   const { data: bookingData, error: bookingError } = await supabaseAdmin.from("bookings").insert({
-    customer_id: cust!.id,
+    customer_id: customerId,
     service_id,
     start_at: start.toISOString(),
     deposit_amount: svc.deposit,
