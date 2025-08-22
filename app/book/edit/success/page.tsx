@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import BottomNavBar from "@/components/BottomNavBar";
 
 export default function EditSuccessPage() {
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -34,7 +35,7 @@ export default function EditSuccessPage() {
   }, [bookingId]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-teal-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-teal-50 flex items-center justify-center pb-16 md:pb-0 relative">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto text-center">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
@@ -88,6 +89,8 @@ export default function EditSuccessPage() {
           </div>
         </div>
       </div>
+      
+      <BottomNavBar />
     </div>
   );
 }

@@ -10,7 +10,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="th">
       <body>
-        <div className="container py-6">{children}</div>
+        <div className="container py-6 relative">{children}</div>
       </body>
     </html>
   );

@@ -273,6 +273,13 @@ export default function CustomersManagementPage() {
                       <p className="font-medium text-gray-800">฿{summary.total_spent.toLocaleString()}</p>
                     </div>
                   </div>
+                  
+                  <button
+                    className="mt-3 w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                    onClick={() => window.open(`/admin/customers/${summary.line_user_id}/bookings?token=${token}`, '_blank')}
+                  >
+                    ดูประวัติการจอง
+                  </button>
                 </div>
                 
                 {/* Details Section - Only shown when expanded */}
@@ -307,6 +314,13 @@ export default function CustomersManagementPage() {
                                 <p className="font-medium text-purple-800">฿{customer.personal_spent.toLocaleString()}</p>
                               </div>
                             </div>
+                            
+                            <button
+                              className="mt-2 w-full py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200 transition-colors"
+                              onClick={() => window.open(`/admin/customers/${summary.line_user_id}/bookings?token=${token}`, '_blank')}
+                            >
+                              ดูประวัติการจองทั้งหมด
+                            </button>
                           </div>
                         </div>
                       ))}

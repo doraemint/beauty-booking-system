@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import liff from "@line/liff";
+import BottomNavBar from "@/components/BottomNavBar";
 
 export default function EditBookingPage() {
   const [bookingId, setBookingId] = useState("");
@@ -145,7 +146,7 @@ export default function EditBookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 pb-16 md:pb-0 relative">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
@@ -252,6 +253,8 @@ export default function EditBookingPage() {
           </div>
         </div>
       </div>
+      
+      <BottomNavBar />
     </div>
   );
 }
