@@ -39,26 +39,59 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
-    // Update the customer record with new name and phone
-    // We'll insert a new record since we allow multiple names/phones per LINE user
-    const { data: newCustomer, error: insertError } = await supabaseAdmin
+    // Check if customer already exists
+    const { data: existingCustomer, error: selectError } = await supabaseAdmin
       .from("customers")
-      .insert({ 
-        line_user_id,
-        name: name.trim(), 
-        phone: phone.trim() 
-      })
       .select("id")
-      .single();
+      .eq("line_user_id", line_user_id)
+      .maybeSingle();
 
-    if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    let customerIdToUpdate;
+
+    if (selectError) {
+      return NextResponse.json({ error: selectError.message }, { status: 500 });
     }
 
-    // Update the booking to reference the new customer record
+    if (existingCustomer) {
+      // Update existing customer record
+      const { data: updatedCustomer, error: updateError } = await supabaseAdmin
+        .from("customers")
+        .update({ 
+          name: name.trim(), 
+          phone: phone.trim() 
+        })
+        .eq("line_user_id", line_user_id)
+        .select("id")
+        .single();
+
+      if (updateError) {
+        return NextResponse.json({ error: updateError.message }, { status: 500 });
+      }
+
+      customerIdToUpdate = updatedCustomer.id;
+    } else {
+      // Insert new customer record
+      const { data: newCustomer, error: insertError } = await supabaseAdmin
+        .from("customers")
+        .insert({ 
+          line_user_id,
+          name: name.trim(), 
+          phone: phone.trim() 
+        })
+        .select("id")
+        .single();
+
+      if (insertError) {
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      }
+
+      customerIdToUpdate = newCustomer.id;
+    }
+
+    // Update the booking to reference the customer record
     const { error: updateBookingError } = await supabaseAdmin
       .from("bookings")
-      .update({ customer_id: newCustomer.id })
+      .update({ customer_id: customerIdToUpdate })
       .eq("id", id);
 
     if (updateBookingError) {
@@ -67,7 +100,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json({ 
       message: "customer information updated successfully",
-      customer_id: newCustomer.id
+      customer_id: customerIdToUpdate
     });
 
   } catch (error) {
