@@ -5,7 +5,9 @@ export const dynamic = "force-dynamic";
 async function getData(id: string) {
   const { data, error } = await supabaseAdmin
     .from("bookings")
-    .select("id, start_at, deposit_amount, payment_status, status, payment_slip_url, customers(name,phone), services(name, price)")
+    .select(
+      "id, start_at, deposit_amount, payment_status, status, payment_slip_url, customers(name,phone), services(name, price)"
+    )
     .eq("id", id)
     .single();
   if (error) throw new Error(error.message);
@@ -20,7 +22,9 @@ export default async function ReceiptPage({ params, searchParams }: any) {
   }
 
   const b = await getData(params.id);
-  const when = new Date(b.start_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" });
+  const when = new Date(b.start_at).toLocaleString("th-TH", {
+    timeZone: "Asia/Bangkok",
+  });
 
   return (
     <div className="container py-10">
@@ -52,12 +56,16 @@ export default async function ReceiptPage({ params, searchParams }: any) {
         </div>
         {b.payment_slip_url && (
           <div className="mt-4">
-            <a href={b.payment_slip_url} className="underline" target="_blank">ดูสลิป</a>
+            <a href={b.payment_slip_url} className="underline" target="_blank">
+              ดูสลิป
+            </a>
           </div>
         )}
 
         <div className="mt-8 flex gap-2 print:hidden">
-          <button className="btn btn-ghost" onClick={() => window.print()}>พิมพ์ / บันทึกเป็น PDF</button>
+          <button className="btn btn-ghost" onClick={() => window.print()}>
+            พิมพ์ / บันทึกเป็น PDF
+          </button>
         </div>
       </div>
     </div>

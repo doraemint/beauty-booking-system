@@ -25,6 +25,9 @@ export default function BookPage() {
   const [startAt, setStartAt] = useState("");
   const [ok, setOk] = useState("");
   const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<
+    "bank_transfer" | "promptpay_qr"
+  >("bank_transfer");
 
   // โหลดบริการ
   useEffect(() => {
@@ -89,11 +92,20 @@ export default function BookPage() {
           service_id: serviceId,
           start_at: startAt,
           line_user_id: uid,
+          payment_method: paymentMethod,
         }),
       });
       const j = await res.json();
-      if (res.ok) setOk(j.message || "สร้างคำขอจองแล้ว กรุณาส่งสลิปในแชต LINE");
-      else alert(j.error || "เกิดข้อผิดพลาด");
+      if (res.ok) {
+        if (paymentMethod === "promptpay_qr") {
+          // Redirect to confirmation page with booking ID
+          window.location.href = `/book/confirmation?bookingId=${j.booking_id}`;
+        } else {
+          setOk(j.booking_id); // Store booking ID for later use
+        }
+      } else {
+        alert(j.error || "เกิดข้อผิดพลาด");
+      }
     } finally {
       setLoading(false);
     }
@@ -359,6 +371,80 @@ export default function BookPage() {
                 />
               </div>
 
+              {/* Payment Method Selection */}
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-4">
+                <h3 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                    />
+                  </svg>
+                  วิธีการชำระเงิน
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      paymentMethod === "bank_transfer"
+                        ? "border-indigo-500 bg-indigo-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                    onClick={() => setPaymentMethod("bank_transfer")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          paymentMethod === "bank_transfer"
+                            ? "border-indigo-500 bg-indigo-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {paymentMethod === "bank_transfer" && (
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                      <span className="font-medium">โอนเงิน</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 text-left">
+                      ส่งสลิปผ่าน LINE
+                    </p>
+                  </button>
+                  <button
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      paymentMethod === "promptpay_qr"
+                        ? "border-indigo-500 bg-indigo-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                    onClick={() => setPaymentMethod("promptpay_qr")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          paymentMethod === "promptpay_qr"
+                            ? "border-indigo-500 bg-indigo-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {paymentMethod === "promptpay_qr" && (
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                      <span className="font-medium">PromptPay QR</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 text-left">
+                      สแกน QR code ชำระเงิน
+                    </p>
+                  </button>
+                </div>
+              </div>
+
               <button
                 className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-2 ${
                   !serviceId || !startAt || !uid || loading
@@ -409,7 +495,41 @@ export default function BookPage() {
                         />
                       </svg>
                     </div>
-                    <p className="text-green-800 font-medium">{ok}</p>
+                    <div>
+                      <p className="text-green-800 font-medium">
+                        สร้างคำขอจองแล้ว
+                      </p>
+                      <div className="mt-2">
+                        <a
+                          href={`/book/details?bookingId=${ok}`}
+                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2h-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            ></path>
+                          </svg>
+                          แก้ไขข้อมูลการจอง
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment instructions based on method */}
+                  <div className="mt-3 p-3 bg-white/50 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      {paymentMethod === "promptpay_qr"
+                        ? "กรุณาสแกน QR code ที่แสดงในหน้าถัดไปเพื่อชำระเงิน"
+                        : "กรุณาส่งสลิปผ่านแชต LINE"}
+                    </p>
                   </div>
                 </div>
               )}
@@ -430,7 +550,9 @@ export default function BookPage() {
                     />
                   </svg>
                   <p className="text-blue-800 text-sm">
-                    หลังส่งคำขอ ให้กลับไปแชต LINE แล้วส่งสลิปเป็นรูปภาพ
+                    {paymentMethod === "promptpay_qr"
+                      ? "หลังชำระเงินผ่าน PromptPay QR ระบบจะอัปเดตสถานะอัตโนมัติ"
+                      : "หลังส่งคำขอ ให้กลับไปแชต LINE แล้วส่งสลิปเป็นรูปภาพ"}
                   </p>
                 </div>
               </div>
